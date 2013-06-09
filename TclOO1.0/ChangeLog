@@ -1,0 +1,1159 @@
+2012-12-21  Donal K. Fellows  <dkf@users.sf.net>
+
+	=== RELEASE OF TCLOO VERSION 1.0 ===
+
+	This officially corresponds to the version of TclOO that is included
+	with Tcl 8.6.0, except for features (notably coroutine support) that
+	require the 8.6 runtime and not-officially-observable differences like
+	the degree of bytecode compilation support.
+
+2012-11-09  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/OOInitStubs.3: Added description of how to use Tcl_OOInitStubs
+	to initialize the TclOO C interface.
+
+2012-07-26  Donal K. Fellows  <dkf@users.sf.net>
+
+	=== RELEASE OF TCLOO VERSION 0.7 ===
+
+	* generic/tclOO.c (ObjectRenamedTrace, ReleaseClassContents):
+	[Bug 3547839]: Use the memory management scheme used in version of
+	TclOO that is included in Tcl 8.6, as that doesn't crash when objects
+	are ripped out from underneath its feet.
+	(Tcl_NewObjectInstance): [Bug 2903011]: Improve fix of this bug; a
+	reference must be held from before the constructor is invoked to after
+	any resulting deletions are done.
+
+2012-05-20  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOBasic.c (TclOO_Class_Constructor): [Bug 2023112]: Cut
+	the amount of hackiness in class constructors, and refactor some of
+	the error message handling from [oo::define] to be saner in the face
+	of odd happenings.
+
+2012-04-10  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOODefineCmds.c (ClassVarsSet, ObjVarsSet): [Bug 3396896]:
+	Ensure that the lists of variable names used to drive variable
+	resolution will never have the same name twice.
+
+2012-04-04  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_NewObjectInstance, TclNRNewObjectInstance):
+	[Bug 3514761]: Fixed bogosity with automated argument description
+	handling when constructing an instance of a class that is itself a
+	member of an ensemble. Thanks to Andreas Kupries for identifying that
+	this was a problem case at all!
+	(Tcl_CopyObjectInstance): Fix potential bleed-over of ensemble
+	information into [oo::copy].
+
+2012-03-27  Donal K. Fellows  <dkf@users.sf.net>
+
+	IMPLEMENTATION OF TIP#397.
+
+	* generic/tclOO.c (Tcl_CopyObjectInstance): [Bug 3474460]: Make the
+	target object name optional when copying classes. [RFE 3485060]: Add
+	callback method ("<cloned>") so that scripted control over copying is
+	easier.
+	***POTENTIAL INCOMPATIBILITY***
+	If you'd previously been using the "<cloned>" method name, this now
+	has a standard semantics and call interface. Only a problem if you are
+	also using [oo::copy].
+
+2012-03-23  Donal K. Fellows  <dkf@users.sf.net>
+
+	IMPLEMENTATION OF TIP#380.
+
+	* doc/define.n, doc/object.n, generic/tclOO.c, generic/tclOOBasic.c:
+	* generic/tclOOCall.c, generic/tclOODefineCmds.c, generic/tclOOInt.h:
+	* tests/oo.test: Switch definitions of lists of things in objects and
+	classes to a slot-based approach, which gives a lot more flexibility
+	and programmability at the script-level. Introduce new [::oo::Slot]
+	class which is the implementation of these things.
+
+	***POTENTIAL INCOMPATIBILITY***
+	The unknown method handler now may be asked to deal with the case
+	where no method name is provided at all. The default implementation
+	generates a compatible error message, and any override that forces the
+	presence of a first argument (i.e., a method name) will continue to
+	function as at present as well, so this is a pretty small change.
+
+2012-02-21  Donal K. Fellows  <dkf@users.sf.net>
+
+	* Makefile.in (install-package, install-libraries): [Bug 3490157]:
+	Don't use ranlib during installation process. It's already been done
+	during build.
+
+2012-01-25  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_CopyObjectInstance): [Bug 3474460]: When
+	copying an object, make sure that the configuration of the variable
+	resolver is also duplicated.
+
+2011-08-07  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOInfo.c (InfoClassCallCmd): [Bug 3387082]: Plug memory
+	leak in call chain introspection.
+
+2011-07-14  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (TclOORenderCallChain): [Bug 3365156]: Remove
+	stray refcount bump that caused a memory leak.
+
+2011-05-25  Donal K. Fellows  <dkf@users.sf.net>
+
+	IMPLEMENTATION OF TIP#381.
+
+	* doc/next.n, doc/ooInfo.n, doc/self.n, generic/tclOO.c,
+	* generic/tclOOBasic.c, generic/tclOOCall.c, generic/tclOOInfo.c,
+	* generic/tclOOInt.h, tests/oo.test, tests/ooNext2.test: Added
+	introspection of call chains ([self call], [info object call], [info
+	class call]) and ability to skip ahead in chain ([nextto]).
+
+2011-03-11  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_NewObjectInstance, TclNRNewObjectInstance)
+	(TclOOObjectCmdCore, FinalizeObjectCall):
+	* generic/tclOOBasic.c (TclOO_Object_Destroy, AfterNRDestructor):
+	* generic/tclOOCall.c (TclOODeleteContext, TclOOGetCallContext):
+	Reorganization of call context reference count management so that code
+	is (mostly) simpler.
+
+	* generic/tclOOMethod.c (ProcedureMethodCompiledVarConnect)
+	(ProcedureMethodCompiledVarDelete): [Bug 3185009]: Keep references to
+	resolved object variables so that an unset doesn't leave any dangling
+	pointers for code to trip over.
+
+2011-01-18  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (PushMethodCallFrame): [Bug 3001438]: Make
+	sure that the cmdPtr field of the procPtr is correct and relevant at
+	all times so that [info frame] can report sensible information about a
+	frame after a return to it from a recursive call, instead of probably
+	crashing (depending on what else has overwritten the Tcl stack!)
+
+2010-11-09  Donal K. Fellows  <dkf@users.sf.net>
+
+	* tests/oo.test: [Bug 3105999]: Backport of memory tests (issue itself
+	did not exist in this branch of the code).
+
+2010-03-24  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOInfo.c (InfoObjectMethodTypeCmd)
+	(InfoClassMethodTypeCmd): Added introspection of method types so that
+	it is possible to find this info out without using errors.
+	* generic/tclOOMethod.c (procMethodType): Now that introspection can
+	reveal the name of method types, regularize the name of normal methods
+	to be the name of the definition type used to create them.
+
+2010-03-05  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.h, generic/tclOOInt.h: [Patch 2961556]: Change TclOO
+	to use the same style of function typedefs as Tcl, as this is about
+	the last chance to get this right.
+
+	***POTENTIAL INCOMPATIBILITY***
+	Source code that uses function typedefs from TclOO will need to update
+	variables and argument definitions so that pointers to the function
+	values are used instead. Binary compatibility is not affected.
+
+2010-03-04  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (ObjectRenamedTrace): [Bug 2962664]: Add special
+	handling so that when the class of classes is deleted, so is the class
+	of objects. Immediately.
+
+	* generic/tclOOInt.h (ROOT_CLASS): Add new flag for specially marking
+	the root class. Simpler and more robust than the previous technique.
+
+2010-02-02  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (AllocObject, MyDeleted): A slightly faster way to
+	handle the deletion of [my] is with a standard delete callback. This
+	is because it doesn't require an additional memory allocation during
+	object creation.
+
+	* generic/tclOOBasic.c (TclOO_Object_Destroy): [Bug 2944404]: Do not
+	crash when a destructor deletes the object that is executing that
+	destructor.
+
+2010-01-28  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOBasic.c (TclOO_Object_Destroy): Move the execution of
+	destructors to a point where they can produce an error. This will not
+	work for all destructors, but it does mean that more failing calls of
+	them will be caught.
+	* generic/tclOO.c (AllocObject, MyDeletedTrace, ObjectRenamedTrace):
+	(ObjectNamespaceDeleted): Stop various ways of getting at commands
+	with dangling pointers to the object. Also increases the reliability
+	of calling of destructors (though most destructors won't benefit; when
+	an object is deleted namespace-first, its destructors are not run in a
+	nice state as the namespace is partially gone).
+
+2009-11-27  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/Class.3, doc/Method.3: [Patch 2903921]: Small spelling fixes
+	from Larry Virden.
+
+	BUMP VERSION TO 0.6.2. Too many people need accumulated small versions
+	and bugfixes, so the version-bump removes confusion.
+
+	* generic/tclOOBasic.c (TclOO_Object_LinkVar): [Bug 2903811]: Remove
+	unneeded restrictions on who can usefully call this method.
+
+2009-11-24  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_NewObjectInstance): [Bug 2903011]: Make it an
+	error to destroy an object in a constructor, and also make sure that
+	an object is not deleted twice in the error case.
+
+2009-11-02  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/object.n (DESCRIPTION): Substantive revision to make it clearer
+	what the fundamental semantics of an object actually are.
+
+2009-10-22  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOBasic.c (TclOO_Object_VarName): [Bug 2883857]: Allow
+	the passing of array element names through this method.
+
+2009-07-24  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/self.n (self class): [Bug 2704302]: Add some text to make it
+	clearer how to get the name of the current object's class.
+
+2009-07-19  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.decls, generic/tclOO.c (Tcl_GetObjectName): Expose a
+	function for efficiently returning the current name of an object.
+
+2009-06-25  Donal K. Fellows  <dkf@users.sf.net>
+
+	* tests/oo.test: [Bug 2811598]: Improve fragile tests.
+
+2009-06-08  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/copy.n: Fix error in example spotted by Venkat Iyer.
+
+2009-05-145 Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOInfo.c (InfoObjectNsCmd): Added introspection mechanism
+	for finding out what an object's namespace is. Experience suggests
+	that it is just too useful to be able to do without it.
+
+2009-05-05  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (InitFoundation, AllocObject, AllocClass):
+	* generic/tclOODefineCmds.c (InitDefineContext): Make sure that when
+	support namespaces are deleted, nothing bad can subsequently happen.
+	Issue spotted by Don Porter.
+
+2009-04-11  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (InvokeForwardMethod): Clarify the resolution
+	behaviour of the name of the command that is forwarded to: it's now
+	resolved using the object's namespace as context, which is much more
+	useful than the previous (somewhat random) behaviour of using the
+	caller's current namespace. Alas, this takes a substantive performance
+	hit for forwards to commands that are not fully qualified, but that is
+	unavoidable due to the lack of certain internal APIs in Tcl 8.5.
+
+2009-03-24  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOBasic.c (TclOOSelfObjCmd): [Bug 2704302]: Make 'self
+	class' better defined in the context of objects that change class.
+
+2009-02-12  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOODefineCmds.c (TclOOGetDefineCmdContext): Use the
+	correct field in the Interp structure for retrieving the frame to get
+	the context object so that people can extend [oo::define] without deep
+	shenanigans. Bug found by Federico Ferri.
+
+2009-01-29  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOODecls.h (Tcl_OOInitStubs): [Bug 2537839]: Make the
+	declaration of this macro work correctly in the non-stub case.
+
+2009-01-27  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOODefineCmds.c (Tcl_ClassSetConstructor):
+	[Bug 2531577]: Ensure that caches of constructor chains are cleared
+	when the constructor is changed.
+
+2009-01-06  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOInfo.c (InfoObjectMethodsCmd,InfoClassMethodsCmd): Only
+	delete pointers that were actually allocated! [Bug 2489836]
+
+	* generic/tclOO.c (Tcl_NewObjectInstance): Perform search for existing
+	commands in right context. [Bug 2481109]
+
+2008-11-01  Donal K. Fellows  <dkf@donal-k-fellowss-macbook-pro.local>
+
+	* generic/tclOOBasic.c (TclOONRUpcatch): Reworked the code that does
+	* generic/tclOO.c (InitFoundation):	 class constructor handling so
+	that it is more robust and runs the constructor call in the context of
+	the caller of the class's constructor method. Needed because the
+	previously used code did not work at all after applying the fix below;
+	no Tcl existing command could reliably do what was needed any more.
+
+	* generic/tclOODefineCmds.c (GetClassInOuterContext): Rework and
+	factor out the code to resolve class names in definitions so that
+	classes are resolved from the perspective of the caller of the
+	[oo::define] command, rather than from the oo::define namespace! This
+	makes much code simpler by reducing how often fully-qualified names
+	are required (previously always in practice, so no back-compat issues
+	exist). [Bug 2200824]
+
+2008-10-14  Donal K. Fellows  <dkf@users.sf.net>
+
+	=== RELEASE OF TCLOO VERSION 0.6 ===
+
+	* configure.in, README.txt, win/TclOO.rc: Bump version.
+	* generic/tclOO.h (TCLOO_VERSION):
+
+	Various minor fixes (ported from Tcl HEAD) to prepare for 0.6 release.
+	* generic/tclOO.c (Tcl_ObjectContextInvokeNext): Added gracefulness in
+	the face of interpreters being deleted.
+	* generic/tclOO.c (InitFoundation):	Use INT2PTR/PTR2INT macros
+	* generic/tclOODefineCmds.c (many):	instead of somewhat dodgy
+	* generic/tclOOCall.c (TclOOGetSortedMethodList): casts.
+	(TclOOGetSortedClassMethodList):
+	* generic/tclOOBasic.c (TclOOSelfObjCmd): Clean up of code of [self]
+	command to use names from Foundation. Don't write directly to the
+	interpreter result object.
+	(TclOO_Object_LinkVar): Application of the "do nothing gracefully"
+	principle.
+	* generic/tclOOInfo.c (various): Don't write directly to the
+	interpreter result object.
+
+	* generic/tclOOInt.h: Added macro magic to make things work with
+	Objective C. [Bug 2163447]
+
+2008-10-10  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOODefineCmds.c (TclOODefineUnexportObjCmd)
+	(TclOODefineExportObjCmd): Corrected export/unexport record synthesis.
+	[Bug 2155658]
+
+2008-09-25  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (InitCallChain, IsStillValid):
+	* tests/oo.test (oo-25.2): Revise call chain cache management so that
+	it takes into account class-wide caching correctly. [Bug 2120903]
+
+2008-09-24  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (DBPRINT): Remove obsolete debugging macro.
+	[Bug 2124814]
+
+2008-09-23  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/Method.3: Corrected documentation. [Patch 2082450]
+
+2008-09-22  Donal K. Fellows  <dkf@users.sf.net>
+
+	* configure.in, README.txt, generic/tclOO.h, win/TclOO.rc: Bump
+	version to 0.6a1.
+
+	IMPLEMENTATION OF TIP#320.
+
+	* generic/tclOODefineCmds.c (TclOODefineVariablesObjCmd):
+	* generic/tclOOInfo.c (InfoObjectVariablesCmd, InfoClassVariablesCmd):
+	* generic/tclOOMethod.c (TclOOSetupVariableResolver, etc):
+	* doc/define.n, doc/ooInfo.n, benchmarks/cps.tcl:
+	* tests/oo.test (oo-26.*): Allow the declaration of the common
+	variables used in methods of a class or object. These are then mapped
+	in using a variable resolver. This makes many class declarations much
+	simpler overall, encourages good usage of variable names, and also
+	boosts speed a bit.
+
+	* generic/tclOOMethod.c (TclOOGetMethodBody): Factor out the code to
+	get the body of a procedure-like method. Reduces the amount of "poking
+	inside the abstraction" that is done by the introspection code.
+
+2008-08-29  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (ObjectRenamedTrace): Backport of corrected handling
+	of detection of when it is appropriate to run destructors.
+
+2008-08-12  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tclOOInfo.c (InfoObjectDefnCmd, InfoObjectMixinsCmd):
+	fix # args displayed. [Bug 2048676]
+
+2008-07-02  Donal K. Fellows  <dkf@users.sf.net>
+
+	* configure.in: Bump version number to 0.5.1.
+
+	* aclocal.m4 (TEAX_SUBST_RESOURCE): Stop trying to build the resource
+	descriptor in when using the VC toolchain for now; it seems to be
+	causing problems with the versions built for the teapot.
+
+2008-06-29  Donal K. Fellows  <dkf@users.sf.net>
+
+	* README.txt: Update to be more relevant to this distribution.
+	* many files: Fix copyrights.
+
+	* doc/object.n (EXAMPLES): Fix incorrect usage of oo::define to be
+	done with oo::objdefine instead. [Bug 2004480]
+
+2008-06-26  Donal K. Fellows  <dkf@users.sf.net>
+
+	=== RELEASE OF TCLOO VERSION 0.5 ===
+
+	* configure.in, generic/tclOO.h, tests/oo.test, win/TclOO.rc: Update
+	version numbers for 0.5 release. This version constitutes the point
+	where the merge to Tcl 8.6a0 (after TIP#257) was finalized;
+	intermediate changes from 0.4 are corrected issues discovered during
+	the merge and immediate wider-scale testing.
+
+	* Makefile.in (genstubs):			 Change the stub table
+	* generic/tclOOStubLib.c (TclOOInitializeStubs): generation to use the
+	* generic/tclOO.c (Tcloo_Init):			 Tcl system, not the
+	* generic/tclOO.decls:				 Tile system.
+	* tools/genStubs.tcl: Removed no-longer-needed file.
+
+	*** POTENTIAL INCOMPATABILITY ***
+	If you use the TclOO C API, you *must* recompile against this new
+	version. The layout of the stubs table is different. Many apologies.
+
+2008-06-19  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_ObjectContextInvokeNext): Corrected 'next' (at
+	* tests/oo.test (oo-7.8):	end of a call chain) to make it
+	* doc/next.n:			consistent with the TIP. [Bug 1998244]
+
+	* generic/tclOOCall.c (AddSimpleClassChainToCallContext): Make sure
+	* tests/oo.test (oo-14.8): that class mixins are processed in the
+	documented order. [Bug 1998221]
+
+2008-06-09  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (TclOOGetSortedMethodList): Plug memory leak
+	that occurred when all methods were hidden. [Bug 1987817]
+
+2008-06-02  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (ReleaseClassContents): Tidy up a bit by hiding more
+	of the details of how lists work; they're not interesting, but they
+	were verbose. No longer...
+
+	* generic/tclOO.c (ReleaseClassContents): Fix reference counting
+	problem identified by Keven Kenny through use of valgrind, which was
+	caused by failing to protect the Object as well as the Class (attached
+	to it) of a subclass being deleted and hence getting a freed-memory
+	read when attempting to delete the class command. [Bug 1981001]
+
+2008-06-01  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (Tcl_NewMethod): Fix wrong initialization of
+	reference counts when changing a method that is currently in use.
+	Thanks to Kevin Kenny for spotting. [Bug 1981001]
+
+2008-05-31  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (InitFoundation): Correct reference counting for
+	strings used when creating the constructor for classes.
+	* generic/tclOOMethod.c (TclOODelMethodRef): Correct fencepost error
+	in reference counting of method implementation structures.
+	* tests/oo.test (oo-0.5): Added a test to detect a memory leak problem
+	relating to disposal of the core object system.
+
+2008-05-30  Donal K. Fellows  <dkf@users.sf.net>
+
+	=== RELEASE OF TCLOO VERSION 0.4 ===
+
+	* configure.in, generic/tclOO.h, tests/oo.test, win/TclOO.rc: Update
+	version numbers for 0.4 release. This version constitutes the point
+	where a merge to Tcl 8.6a0 (after TIP#257) was carried out.
+
+2008-05-29  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (TclOOGetSortedClassMethodList):
+	* generic/tclOOInfo.c (InfoObjectMethodsCmd, InfoClassMethodsCmd):
+	* tests/oo.test, doc/ooInfo.n: Corrected, simplified and systematized
+	the code to introspect the list of methods supported by an object or
+	class. Now, -all checks (super)classes and -private gets what is
+	accepted by [my].
+
+2008-05-28  Donal K. Fellows  <dkf@users.sf.net>
+
+	* tests/oo.test (oo-16.4): Deepen this test to make it clearer what
+	the difference between a class and a metaclass is.
+	(initInterpreter): Factor out the code to set up a sub-interpreter for
+	loading TclOO, so that the tests work when run with TclOO not loaded
+	from the current directory.
+
+2008-05-26  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (InitFoundation): Make the counter that gives each
+	object a unique serial number be a thread-local so that if a method
+	chain reference in a Tcl_Obj internal representation crosses an
+	interpreter boundary, it won't cause problems if it happens to
+	coincide. Performance cost is almost nil (one extra pointer needs to
+	be dereferenced during object creation, plus a bit more per-interp
+	cost to initialize access to the thread-specific data).
+
+2008-05-25  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (TclOOGetCallContext): Cache call chains at the
+	class level when possible. This should speed up the case where an
+	object is a "typical" member of the class quite a bit by not requiring
+	a rebuild of the call chain for each instance. Will do quite a bit to
+	reduce the memory consumption (fewer hash tables!) at a cost of some
+	comparisons being marginally slower.
+
+2008-05-24  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (PushMethodCallFrame): Reduce number of
+	different stack frame flags used. Just use two now, one to indicate
+	that this is a method and one to indicate that this is a definition
+	context.
+
+	* configure.in: Bump version to pre-0.4.
+
+	* generic/tclOOBasic.c: Factor out the implementations of commands and
+	methods. Makes it easier to see which parts are script-level API.
+
+	* generic/tclOO.c: Clean up responsibilities between InitFoundation
+	and Tcloo_Init.
+
+2008-05-23  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c and others: Removed use of Tcl_Preserve for
+	structure lifetime management and replaced with a reference counting
+	scheme instead, for a small but consistent speed boost on all method
+	calls and especially object destruction.
+
+2008-05-22  Donal K. Fellows  <dkf@users.sf.net>
+
+	=== RELEASE OF TCLOO VERSION 0.3 ===
+
+	* configure.in, generic/tclOO.h, tests/oo.test, win/TclOO.rc: Update
+	version numbers for 0.3 release.
+
+2008-05-21  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (TclOOObjectCmdCore): Turn off caching in the
+	primary case that causes problems when a method name mapper is
+	installed. API will need rethinking, but it's very complex to handle
+	efficiently. [Bug 1895546]
+
+	* generic/tclOO.c (AllocObject): Directly allocate structures relating
+	to the object's [my] command; we know that's a fresh namespace so the
+	extra checks performed by Tcl_CreateObjCommand are pure overhead.
+	(Tcl_NewObjectInstance): Remove bottlenecks relating to command
+	renaming; using Tcl_FindCommand for the safety check is much faster!
+
+	* generic/tclOODefineCmds.c (FindCommand): Factor out the code to do
+	lookup of commands with abbreviations in the case where the definition
+	command is not given a script.
+
+2008-05-20  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOODefineCmds.c (TclOOUnknownDefinition): Added an unknown
+	handler to the oo::define and oo::objdefine commands internal
+	namespace processing so that you can use unique prefixes. Addresses
+	[Bug 1962026] on a practical level (though not aesthetically).
+
+	* generic/tclOOInt.h (Object): Put a reference to the object system
+	foundation into the object structure so that fewer hash table lookups
+	are required during the creation of objects and the invokation of
+	methods upon objects.
+
+2008-05-18  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (TclOOInvokeObject): Strip out one of the context
+	caches (no longer needed because the key differences between public
+	and private contexts are no longer cached anyway) and rename to better
+	reflect the true nature.
+	* generic/tclOOCall.c (TclOOGetCallContext): Revise flag handling to
+	take account of the fact that public and private call chains are now
+	cached together.
+
+	* generic/tclOO.c, generic/tclOOMethod.c: Strip out overhead from the
+	call path for the basic predefined methods.
+
+2008-05-17  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcloo_SafeInit): Defined this so that TclOO is
+	loadable in safe interpreters; nothing it does is unsafe as it does
+	not manipulate system resources.
+
+	* generic/tclOODefineCmds.c (TclOODefineExportObjCmd)
+	(TclOODefineUnexportObjCmd): Only invalidate method chains when the
+	export status of a method is actually changed.
+
+2008-05-16  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (TclOOInvokeContext): Relocate the special
+	handling of the count of arguments to here from multiple other
+	locations in the source code. It should only be special at the very
+	first step in the call chain; after that, normal [next] processing
+	should occur. [Bug 1965063]
+
+2008-05-15  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_GetObjectFromObj): Make sure that [namespace
+	import] doesn't fool the code to determine if a command is an object.
+	[Bug 1963130]
+
+2008-05-13  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (TclOOGetCallContext, etc.): Rework the context
+	management code so that call contexts are split into two parts: a part
+	that is static over the lifetime of the context and which can be
+	cached and shared between calls (allocated with ckalloc) and a part
+	that varies during a call, which isn't shared or cached (and which is
+	allocated with TclStackAlloc). This will make recursive calls to an
+	object's methods *much* more efficient. No public API affected.
+
+	*** POTENTIAL INCOMPATABILITY ***
+	If you used the internal API and poked inside the call context, you
+	will minimally need to recompile. Probably rewrite too; many fields
+	have moved inwards into the shared part. Note that this part of the
+	code is subject to change in the future, e.g. when class-level caches
+	are created...
+
+2008-05-12  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (ObjectNamespaceDeleted): Unstitch class from
+	mixed in class correctly. [Bug 1905797]
+
+	* generic/tclOOCall.c (TclOOGetCallContext): Get the creation epoch of
+	the object referred to in a context and store that separately in the
+	context so that we can safely find out whether a cached context refers
+	to a deleted object without needing to read inside that object! This
+	clears a FreeMemoryRead identified in [Bug 1959637]; might clear that
+	bug in its entirety too, if it turns out to be a FMR fundamentally,
+	which would also explain its heisenbug-ness.
+
+2008-05-11  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (TclOOGetCallContext): Increase the amount of
+	safety armouring on the cache contents reuse conditions. Hopefully (!)
+	this will fix [Bug 1959637]
+
+	* generic/tclOOInt.h (Class,Object): Tune down memory consumption by
+	removing the pre-computed class hierarchy (useless because it was
+	wrong) and changing the context caches to be allocated on the fly (as
+	many objects won't need both of them).
+
+	* generic/tclOOCall.c (AddSimpleClassChainToCallContext): Move mixin
+	processing to here so that processing mixins of mixins works. [Bug
+	1960703] Also enable mixin processing of constructors and destructors;
+	these are sensible given that class-level mixins are supported.
+
+	* generic/tclOODefineCmds.c (TclOODefineDeleteMethodObjCmd): Move the
+	delete-a-method functionality into a new command, making the behaviour
+	of the 'method' subcommand less horrible. [FRQ 1959483]
+	(TclOODefineRenameMethodObjCmd, RenameDeleteMethod): Add a new command
+	to allow methods to be renamed. Factor out the large amount of common
+	code with the code to delete methods.
+
+	*** POTENTIAL INCOMPATABILITY ***
+	If you were relying on using 'oo::define method' to remove methods.
+
+	* generic/tclOOMethod.c (InvokeProcedureMethod): Ensure that method
+	implementations do not vanish from underneath our feet. Prevents some
+	crashes found in the test suite when changing some things.
+
+2008-05-08  Donal K. Fellows  <dkf@users.sf.net>
+
+	* configure.in:			   Bump version to pre-0.3 now that
+	* generic/tclOO.h (TCLOO_VERSION): there's been an API change.
+
+	* generic/tclOODefineCmds.c (TclOOObjDefObjCmd): Significant revision
+	* generic/tclOO.c (InitFoundation, Tcloo_Init):	 that splits the
+	* doc/define.n:					 oo::define machinery
+	into two pieces, creating oo::objdefine for configuring objects and
+	leaving oo::define for just classes. Gets rid of the nasty "self."
+	prefixes. Many thanks to Don Porter for the suggestion. [FRQ 1959486]
+
+	*** POTENTIAL INCOMPATABILITY ***
+	If you were configuring objects (instead of just classes) this change
+	will definitely affect you.
+
+	* generic/tclOO.c (ObjectLinkVar): Simplify this method back so that
+	it reflects what is documented. The extended version was never nice to
+	use, and was somewhat surprising in edge cases. [Bug 1959457]
+
+2008-04-30  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (PushMethodCallFrame): Only recompile a method
+	body when necessary, rather than over eagerly. This version is
+	possibly a bit the other way; can tune later. [Bug 1945769]
+
+2008-04-14  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/class.n: Fix typo, reported by Corrado Ficicchia.
+
+2008-04-08  Donal K. Fellows  <dkf@users.sf.net>
+
+	=== RELEASE OF TCLOO VERSION 0.2 ===
+
+	* configure.in, generic/tclOO.h, win/TclOO.rc: Update version number
+	to release.
+
+2008-04-04  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* generic/tclOO.decls, generic/*.c, doc/Method.3: Renamed the methods
+	so that confusion is reduced by eliminating the term "class method"
+	and changing "object method" to "instance method". [Bug 1863645]
+
+	***POTENTIAL INCOMPATABILITY*** for anyone using the C API.
+
+2008-04-02  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* tests/oo.test: Fixed crashing test by doing a version that works and
+	marking the failing version as a known bug.
+
+	* configure.in, config.h.in, generic/*.c: Changed to use autoheader
+	rather than a slew of configure parameters.
+
+2008-03-26  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/*: Fixes for documentation bugs found when using Tcl's HTML
+	scraper on the docs. Includes defining keywords for all pages.
+
+2008-02-01  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c: Adjust function declarations (to enable better
+	optimization) and ensure that the declarations and function defs match
+	correctly (VC is picky about this).
+
+2008-02-01  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* aclocal.m4: Adjusted to get quoting right.
+
+2008-01-30  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* aclocal.m4: Ugh, msys make does / munging! [Bug 1881216] again.
+
+2008-01-29  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* aclocal.m4 (TEAX_VC_MANIFEST): Added some code to switch between the
+	gcc and vc ways of writing some flags.
+	* configure.in: Move TEAX_SUBST_RESOURCE after TEA_CONFIG_CFLAGS so
+	that the detection of the resource compiler is correct. [Bug 1881216]
+
+2008-01-21  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* configure.in, aclocal.m4, Makefile.in: Clean up the configure code
+	so that it's possible to read the configure script again. Factor out
+	ensuing macro definitions into aclocal.m4 for clarity.
+
+2008-01-18  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* configure.in, Makefile.in: Add code to make the resource compiler
+	adapt to being used with the VC toolchain. Also adds some support for
+	manifest generation (needed for Vista?) [Bug 1870456, part 3] (kbk)
+
+2008-01-16  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* generic/tclOOCall.c, tclOOInt.h: Add and fix types to make things
+	quieter with VC2k5SP1. [Bug 1870456, part 2] (kbk)
+
+	* generic/tclOODefineCmds.c (TclOOObjectSetFilters)
+	(TclOOClassSetFilters, TclOOObjectSetMixins, TclOOClassSetMixins):
+	Factor out the code to manage lists of filters and mixins so that they
+	can be manipulated from the C level more easily. Now part of the
+	"internal" API.
+
+	* generic/tclOODefineCmds.c (BumpGlobalEpoch): Factor out the code to
+	handle incrementing of the global epoch counter when a class is
+	reconfigured. Allows us to put conditions on doing this that are easy
+	to enforce and which should result in a performance boost in practice.
+
+2008-01-12  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* tests/oo.test (oo-23.1): Added new test that shows how to do
+	Self-like object creation through prototypical objects. [Bug 1865054]
+
+	* generic/tclOODefineCmds.c (TclOODefineMixinObjCmd): Stop classes
+	from mixing in themselves as classes, which can lead to an infinite
+	loop.
+
+2008-01-09  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* generic/tclOOCall.c (AddClassFiltersToCallContext): Add filters
+	defined by classes mixed into classes. [Bug 1865053]
+
+	* generic/tclOO.c (Tcl_ClassSetConstructor, Tcl_ClassSetDestructor):
+	Factored out the code to install a constructor or destructor.
+
+2008-01-06  Donal K. Fellows  <dkf@users.sf.net>
+
+	* configure.in:			   Bump version to pre-0.2 now that
+	* generic/tclOO.h (TCLOO_VERSION): there's been an API change.
+
+	* .../tclOO.h (Tcl_CloneProc, Tcl_MethodType, Tcl_ObjectMetadataType):
+	* generic/tclOOMethod.c (CloneProcedureMethod, CloneForwardMethod):
+	* generic/tclOO.c (Tcl_CopyObjectInstance, CloneObjectMethod)
+	(CloneClassMethod): Redefined cloning system to allow user code to
+	reject a request to create a copy of an object. Allows some objects to
+	become genuinely unique, which is necessary when they contain really
+	precious OS resources. [FRQ 1863642]
+
+	***POTENTIAL INCOMPATIBILITY***
+	For any code that used the old cloning functions.
+
+	* generic/tclOO.h (TCLOO_VERSION): Rename of OO_VERSION.
+	* generic/tclOOStubLib.c, generic/tclOODecls.h: Corrected macro usage
+	so that only one #def is involved in stub usage. [Bug 1864851]
+
+2008-01-06  Kevin B. Kenny  <kennykb@acm.org>
+
+	* generic/tclOODecls.h: Removed superfluous '\r' characters that
+	caused syntax errors when compiling with mingw.
+
+2008-01-05  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (TclOOInvokeObject):		    New functions to
+	* generic/tclOOMethod.c (TclOONewProcClassMethodEx) make itcl-ng
+	(TclOONewProcInstanceMethodEx):			    integration much
+	simpler. Adapted from [Patch 1791190], but with internal names as they
+	expose concepts which do not square completely with the way TclOO
+	officially "works".
+
+2008-01-03  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.decls: Moved TclOONewForwardClassMethod and
+	TclOONewForwardMethod to private stub API from pure-internal. [FRQ
+	1842600]
+
+	* generic/tclOO.c (TclOOObjectCmdCore): Tweaked the signature of
+	the itcl-ng method remapping callback. [Patch 1791215]
+	(Tcl_ObjectSetMethodNameMapper): Added getter and setter functions
+	for the method remapping callback. [FRQ 1842588]
+
+2007-12-30  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOStubLib.c (TclOOInitializeStubs): Added more error
+	checking. [Bug 1847313]
+
+	* generic/tclOODecls.h: Added changes forgotten when adapting from the
+	Tile sources. [Bug 1847318]
+
+	* configure.in: Corrected which headers are installed by default and
+	* Makefile.in:	factored out the private headers which are only
+	installed if specially requested (use 'make install-private-headers'
+	to get them). [Bug 1847311]
+
+	* win/TclOO.rc: Relocated from top-level directory as it is only
+	relevant to Windows builds. [Bug 1816147]
+
+2007-12-02  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOInfo.c (TclOOInitInfo): Updating the ensemble map now
+	requires a non-NULL interp argument. [Bug 1841743]
+
+2007-11-09  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* generic/tclOOCall.c (TclOOGetSortedMethodList): Ensure that export
+	cannot cause the wrong list of methods to be printed in error
+	messages. [Bug 1824958]
+
+2007-10-18  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* generic/tclOO.h (OO_VERSION): Forgot to update this when bumping the
+	version number.
+
+2007-10-12  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* generic/tclOO.c (TclOOObjectCmdCore): Added method name remapping
+	support for Arnulf. [Patch 1791215]
+
+2007-10-11  Daniel Steffen  <das@users.sourceforge.net>
+
+	* Makefile.in:	RANLIB static libraries during install; add install
+	* configure.in:	target dependencies; rename a few makefile vars to make
+	overriding them the same as in TEA; distclean tclooConfig.sh; change
+	stub lib install location from libdir to TEA standard pkglibdir.
+	* configure:	autoconf-2.59
+
+2007-10-03  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	* tclooConfig.sh.in, configure.in: Made more robust when configure is
+	called with a relative directory name.
+
+2007-10-01  Donal K. Fellows  <donal.k.fellows@man.ac.uk>
+
+	=== RELEASE OF TCLOO VERSION 0.1 ===
+
+	* Makefile.in (TCL_VERSION_REQ): Updated to require the correct
+	public version instead of a private version that was never released.
+	(dist): Updated so that manual pages are run through 'soelim'.
+
+2007-10-01  Donal K. Fellows  <dkf@users.sf.net>
+
+	* README.txt: Added a readme as part of preparation for release.
+
+	* configure.in (TCLOO_*_SPEC): Added more bits to make the config
+	descriptor file much more likely to be relevant.
+
+2007-09-28  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* tclooConfig.sh.in: Added file that describes "useful" configuration
+	about TclOO so that people can build against it.
+
+2007-09-03  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (InitFoundation): Divide the initialization code
+	into two more manageable pieces.
+
+2007-08-21  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (AddMethodToCallChain): Prevent memory overruns
+	that didn't really matter (except in certain very rare cases). Found
+	by Arnulf Wiedemann and valgrind.
+
+2007-08-20  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (PushMethodCallFrame): Fix handling of things
+	when the magical itcl mode takes over; random crashes really aren't
+	much fun. Found by Arnulf Wiedemann.
+
+2007-08-15  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* generic/tclOOMethod.c (InvokeProcedureMethod): Plug a memory leak
+	found by Arnulf Wiedemann.
+
+2007-08-13  Donal K. Fellows  <donal.k.fellows@manchester.ac.uk>
+
+	* generic/tclOOInfo.c (TclOOInitInfo): Stop a potential memory leak in
+	the case when someone modifies the info ensemble before us.
+
+2007-08-08  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (TclOOIsReachable): The is-a relationship should
+	follow the class mixin hierarchy too, and this function is a
+	reasonable addition to the exported API (currently private).
+
+2007-08-07  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (TclOOObjectCmdCore): Renamed from ObjectCmd and
+	exposed in stubs table. Added mechanism to allow callers to start the
+	chain part way through, though this is not used in the TclOO core.
+
+2007-08-06  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.decls (TclOONewProcMethod, TclOONewProcClassMethod):
+	Added to internal stubs table.
+
+	* generic/tclOOMethod.c (InvokeProcedureMethod, PushMethodCallFrame):
+	Reorganize so that frame management is clearer and better supportive
+	of Arnulf's requirements. This involves added a clientData pointer,
+	moving a callback, and breaking out things so that less is held on the
+	C stack, which is already fairly full...
+
+2007-08-04  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_InvokeNextContext): Added function to allow
+	third party method implementations to traverse the call chain.
+
+2007-08-03  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c: Use 'inline' where possible.
+
+	* generic/tclOOInfo.c (InfoObjectVarsCmd): Rewrote following Miguel
+	Sofer's incompatible changes in the Tcl core's implementation of
+	variables.
+
+	* generic/tclOOMethod.c (TclOONewProcMethod)
+	(TclOONewProcClassMethod, TclOOMakeProcObjectMethod)
+	(TclOOMakeProcClassMethod): Split apart the code to create new
+	procedure-like methods so that third-party code can plug into it more
+	effectively, following suggestions from Arnulf Wiedemann.
+
+2007-06-25  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOInt.h, generic/tclOOMethod.c (InvokeProcedureMethod):
+	Removed the FRAME_IS_FILTER flag; it was never queried anywhere since
+	it proved more reliable to get the is-filter info from elsewhere.
+	Documented the other call-frame flags.
+
+2007-06-16  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOMethod.c (InvokeProcedureMethod, TclOONewProcMethod)
+	(TclOONewProcClassMethod, CloneProcedureMethod): Added a mechanism to
+	allow control over whether a method is invoked in the namespace of the
+	object that it was invoked upon (the old behaviour, and still the
+	default) or the class that defined it (required for non-horrible
+	support of Itcl). Not yet exposed to scripts.
+
+	* generic/tclOO.c (Tcl_NewObjectInstance): When renaming an object
+	during construction, make sure that it is not being renamed to itself.
+	Thanks to Arnulf Wiedemann for spotting this.
+
+2007-06-15  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOOCall.c (methodNameType, TclOOStashContext)
+	(DupMethodNameRep, FreeMethodNameRep, TclOOGetCallContext):
+	* generic/tclOO.c (AllocObject, ObjectCmd): Cache call contexts in
+	* generic/tclOOInt.h: Tcl_Obj internal representations for (hopefully)
+	some speedup of method invokation.
+
+2007-06-14  Miguel Sofer  <msofer@users.sf.net>
+
+	* generic/tclOOMethod.c (InvokeProcedureMethod):
+	* tclOOInt.h: Adaptation to a change in Tcl HEAD: renumbering the
+	FRAME_IS_... flag values, using the new shorter api to
+	TclObjInterpProcCore.
+
+2007-06-12  Donal K. Fellows  <dkf@users.sf.net>
+
+	* Makefile.in (gdb, gdbtest): Add targets for running a debugger that
+	actually work on Windows.
+
+	* generic/tclOOInfo.c (TclOOInitInfo): Plumb the introspection code
+	into the Tcl core [info] command.
+
+2007-06-11  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (ClassCreateNs): Exposed the ability to create
+	* doc/class.n: objects with particular namespaces for names to scripts
+
+	* generic/tclOO.c (Tcl_NewObjectInstance, Tcl_CopyObjectInstance):
+	* doc/Class.3: Extended the C API to allow control over the naming of
+	the object's namespace, exposing the change to AllocObject from
+	yesterday. Not yet exposed to scripts.
+
+	* generic/tclOOInfo.c (InfoObjectMethodsCmd): Enhanced the method
+	* doc/ooInfo.n: introspection to make it easier for commands to find
+	what the methods of an object are. Thanks to Mark Janssen for
+	suggesting this.
+
+2007-06-10  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (AllocObject): Started writing code to allow control
+	over the name of the object's namespace generated during object
+	creation. This feature is not yet exposed outside this file.
+
+	* generic/tclOOMethod.c: Split out the method handling code into its
+	own source file; it's long enough and complex enough to warrant it.
+
+2007-06-08  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (Tcl_ObjectSetMetadata, Tcl_ClassSetMetadata): When
+	deleting metadata, must delete the metadata. (Thanks to Arnulf
+	Wiedemann for spotting!)
+
+	* generic/tclOO.c (AllocClass, Tcl_NewObjectInstance): Make the class
+	splicing work correctly so that the set of instances of oo::object and
+	the set of subclasses of oo::class stay limited in size. Fixes the
+	other part of the memory leak. [Bug 1732364]
+
+2007-06-07  Donal K. Fellows  <dkf@users.sf.net>
+
+	* generic/tclOO.c (ObjectNamespaceDeleted): Try to make the code leak
+	less. This doesn't seem to be a complete fix of [Bug 1732364] but is
+	covering at least one case that might have been hit...
+
+	* generic/tclOO.c (NextObjCmd): Make this behave consistently with
+	documentation and what is most useful in practice.
+
+	* generic/tclOO.c (TclOOObjectName, SelfObjCmd, ObjectRenamedTrace):
+	Added code to manage a cache of the command name for the [self object]
+	command. It seems that this was previously a very slow command. In so
+	doing, allow simplification of a lot of code.
+
+2007-06-06  Donal K. Fellows  <dkf@users.sf.net>
+
+	* Makefile.in (shell): Added target for convenience of interactive
+	testing.
+
+	* Makefile.in (benchmarks): Added some benchmarking scripts, based off
+	* benchmarks/*.tcl:	    those in http://dada.perl.it/shootout/
+
+	* doc/next.n: Substantial enhancements, including a demonstration of
+	how a mixin and a filter can build a simple bolt-on method result
+	memoization cache.
+
+2007-06-05  Donal K. Fellows  <dkf@users.sf.net>
+
+	* Makefile.in: Added targets for building docs and distributions and
+	installing documentation.
+
+2007-06-04  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/ooInfo.n: Added documentation for the introspection commands.
+
+2007-06-03  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/Method.3: The other half of the C interface, being the part
+	dealing with methods.
+
+2007-06-02  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/Class.3: Started documenting the C interface.
+
+2007-06-01  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/next.n: Added documentation for [next].
+	* doc/my.n: Added documentation for [my].
+
+2007-05-31  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/self.n: Added some documentation for [self].
+
+	* generic/tclOO.c (InvokeForwardMethod, ObjectUnknown): Better fix for
+	the unknown method handling.
+	* doc/object.n: Document it correctly.
+
+2007-05-30  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/copy.n: Started work on documenting oo::copy.
+
+	* generic/tclOO.c (ObjectUnknown): Fixed possible crash when unknown
+	method used directly.
+
+	* configure.in: Detect sdx during configure time, not make time.
+
+2007-05-29  Donal K. Fellows  <dkf@users.sf.net>
+
+	* TclOO.rc, Makefile.in, configure.in: Horrific hacking to make the
+	generated DLL have nice metadata on Windows.
+
+	* doc/class.n: Started work on third documentation file.
+	* doc/object.n: Started work on second documentation file.
+
+2007-05-28  Donal K. Fellows  <dkf@users.sf.net>
+
+	* doc/define.n: Completed the list of define subcommands, but not yet
+	documented what they all do. Added basic example.
+
+2007-05-24  Donal K. Fellows  <dkf@users.sf.net>
+
+	* license.terms: Added, same license as Tcl/Tk.
+	* doc/define.n: Started to write documentation.
+
+2007-05-19  Donal K. Fellows  <dkf@users.sf.net>
+
+	* Makefile.in (kit): Rewrote to make the building of a starkit work
+	for myself. Also tried to separate out things substituted by configure
+	from things that are not substituted. The build now _requires_ GNU
+	make to work, since it is easier to control substitution with it.
+
+2007-05-18  Donal K. Fellows  <dkf@users.sf.net>
+
+	* Makefile.in (kit): Added _experimental_ code to build a starkit
+	distribution of the code.
+	* configure.in (PLATFORM): Added code to determine what platform we
+	are building for, needed for making the build of the kit work right.
+
+	* Makefile.in (pkgIndex.tcl): Update the statement of what version
+
+	* tests/oo.test: Convert {expand} to {*}.
+	* generic/tclOOInt.h, generic/tclOO.h: Remove obsolete comments.
+
+	* configure.in, Makefile.in: Updated to latest TEA and corrected build
+	system to work on more platforms.
+	* pkgIndex.tcl (removed): This file now generated automatically.
+
+	* generic/tclOO.c (Tcloo_Init, ObjectDeletedTrace)
+	(Tcl_CopyObjectInstance, ObjectCmd): Remove unused variables.
+
+	Initial check-in as an extension.
