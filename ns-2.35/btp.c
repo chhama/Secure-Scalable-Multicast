@@ -414,6 +414,7 @@ void print_tree( node * root ) {
 		printf("Empty tree.\n");
 		return;
 	}
+	printf("0\n");
 	queue = NULL;
 	enqueue(root);
 	while( queue != NULL ) {
@@ -1446,12 +1447,12 @@ int main( int argc, char ** argv ) {
 			fscanf(fp, "%d\n", &input);
 			if(command==11111111)
 			{
-				printf("Inserting\n");
+				printf("++Inserting %d\n",input);
 				root = insert(root, input, input);
 			}
 			else if(command==22222222)
 			{
-				printf("Deleting\n");
+				printf("++Deleting %d\n",input);
 				root = delete(root, input);
 			}
 			else if(command==33333333)

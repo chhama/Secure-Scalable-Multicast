@@ -6,24 +6,14 @@ $ns multicast
 global nummsg
 set nummsg 1
 #Turn on Tracing
-set tf [open output.tr w]
+set tf [open "~/output.tr" w]
 $ns trace-all $tf
 
 # Turn on nam Tracing
-set fd [open linmcast.nam w]
+set fd [open "~/linmcast.nam" w]
 $ns namtrace-all $fd
 
-# Create nodes
-set OLDCOMM {
-	set n(0) [$ns node]
-set n(1) [$ns node]
-set n(2) [$ns node]
-set n(3) [$ns node]
-set n(4) [$ns node]
-set n(5) [$ns node]
-set n(6) [$ns node]
-set n(7) [$ns node]
-}
+
 global n
 #set i 0
 for {set i 0} {$i < 80} {incr i} {
@@ -85,16 +75,26 @@ proc Graph {} {
 
 }
 
-proc increase {} {
+proc increase {jnode} {
 	global ns g g1 nummsg
 	incr nummsg
 	puts "increment"
+	set ipfl [open bptinput a+]
+	puts $ipfl "11111111"
+	puts $ipfl $jnode
+	close $ipfl
+	puts [exec "./bpt" 4 "bptinput"]
 }
 
-proc decrease {} {
+proc decrease {lnode} {
 	global ns g g1 nummsg
 	incr nummsg -1
 	puts "decrement"
+	set ipfl [open bptinput a+]
+	puts $ipfl "22222222"
+	puts $ipfl $lnode
+	close $ipfl
+	puts [exec "./bpt" 4 "bptinput"]
 }
 set j 1
 #joining phase
@@ -102,7 +102,7 @@ for {set i 1} {$i < 80} {incr i} {
 set rcvr($j) [new Agent/Null]
 $ns attach-agent $n($i) $rcvr($j)
 $ns at $j.0 "$n($i) join-group $rcvr($j) $group1"
-$ns at $j.0 "increase"
+$ns at $j.0 "increase $i"
 incr j
 }
 
@@ -110,63 +110,12 @@ for {set i 79} {$i > 0} {incr i -1} {
 #set rcvr($j) [new Agent/Null]
 #$ns attach-agent $n($i) $rcvr($j)
 $ns at $j.0 "$n($i) leave-group $rcvr($i) $group1"
-$ns at $j.0 "decrease"
+$ns at $j.0 "decrease $i"
 incr j
 }
 
 
-set commnt {
-# Create receiver
-set rcvr1 [new Agent/Null]
-$ns attach-agent $n(5) $rcvr1
-$ns at 1.0 "$n(5) join-group $rcvr1 $group1"
-$ns at 1.0 "increase"
 
-
-set rcvr2 [new Agent/Null]
-$ns attach-agent $n(6) $rcvr2
-$ns at 1.5 "$n(6) join-group $rcvr2 $group1"
-$ns at 1.5 "increase"
-
-set rcvr3 [new Agent/Null]
-$ns attach-agent $n(7) $rcvr3
-$ns at 2.0 "$n(7) join-group $rcvr3 $group1"
-$ns at 2.0 "increase"
-#$ns duplex-link $n(4) $n(6) 1.5Mb 10ms DropTail
-
-
-set rcvr4 [new Agent/Null]
-$ns attach-agent $n(5) $rcvr1
-$ns at 2.5 "$n(5) join-group $rcvr4 $group2"
-$ns at 2.5 "increase"
-
-set rcvr5 [new Agent/Null]
-$ns attach-agent $n(6) $rcvr2
-$ns at 3.0 "$n(6) join-group $rcvr5 $group2"
-$ns at 3.0 "increase"
-$ns attach-agent $n(79) $rcvr2
-$ns at 3.0 "$n(79) join-group $rcvr5 $group2"
-$ns at 3.0 "increase"
-
-set rcvr6 [new Agent/Null]
-$ns attach-agent $n(7) $rcvr3
-$ns at 3.5 "$n(7) join-group $rcvr6 $group2"
-$ns at 3.5 "increase"
-
-$ns at 4.0 "$n(5) leave-group $rcvr1 $group1"
-$ns at 4.5 "$n(6) leave-group $rcvr2 $group1"
-$ns at 5.0 "$n(7) leave-group $rcvr3 $group1"
-$ns at 4.0 "increase"
-$ns at 4.5 "increase"
-$ns at 5.0 "increase"
-
-$ns at 5.5 "$n(5) leave-group $rcvr4 $group2"
-$ns at 6.0 "$n(6) leave-group $rcvr5 $group2"
-$ns at 6.5 "$n(7) leave-group $rcvr6 $group2"
-$ns at 5.5 "increase"
-$ns at 6.0 "increase"
-$ns at 6.5 "increase"
- }
 # Schedule events
 $ns at 0.0 "Graph"
 $ns at 0.5 "$cbr1 start"

@@ -2,9 +2,13 @@
 #Create an event scheduler wit multicast turned on
 package require TclOO
 source "keytree.tcl"
+source "randstring.tcl"
 
 set ns [new Simulator -multicast on]
 $ns multicast
+
+global CRYPTO
+set CRYPTO [randomRangeString 20]
 
 global NODECOUNT 
 set NODECOUNT 0
@@ -12,13 +16,16 @@ set NODECOUNT 0
 global nummsg
 set nummsg 1
 #Turn on Tracing
-set tf [open output.tr w]
+set tf [open "~/output.tr" w]
 $ns trace-all $tf
-
+ 
 # Turn on nam Tracing
-set fd [open randmcast.nam w]
+set fd [open "~/randmcast.nam" w]
 $ns namtrace-all $fd
 
+#open the input file for the first time
+set firstopen [open bptinput w]
+close $firstopen
 
 # Create nodes
 set OLDCOMM {
@@ -38,7 +45,8 @@ global NUMNODES
 for {set i 0} {$i < $NUMNODES} {incr i} {
 	set n($i) "[$ns node]"
 }
-
+global CRYPT0
+set CRYPT0 $CRYPTO
 #maintains list of leaving nodes
 global llist
 for {set i 0} {$i < $NUMNODES} {incr i} {
@@ -101,6 +109,12 @@ proc Graph {} {
 
 }
 
+proc changekey {} {
+	global CRYPTO CRYPT0
+	puts "CHANGING KEY...." 
+	set CRYPT0 $CRYPTO
+	set CRYPTO [randomRangeString 20]
+}
 proc increase {jnode} {
 	global ns g g1 nummsg NODECOUNT
 	incr nummsg
@@ -111,7 +125,7 @@ proc increase {jnode} {
 	puts $ipfl "11111111"
 	puts $ipfl $jnode
 	close $ipfl
-	puts [exec "~/bpt" 4 "bptinput"]
+	puts [exec "./bpt" 4 "bptinput"]
 }
 
 proc decrease {lnode} {
@@ -127,14 +141,19 @@ proc decrease {lnode} {
 	puts $ipfl "22222222"
 	puts $ipfl $lnode
 	close $ipfl
-	puts [exec "~/bpt" 4 "bptinput"]
+	puts [exec "./bpt" 4 "bptinput"]
 	# if {$llist($delnode)==1} {
 	# 	tree delete $delnode
 	# }
 }
 
 proc sendmsg {nodeid} {
-	puts "Message from $nodeid"
+	global CRYPTO CRYPT0
+	puts "Message from root is $CRYPTO"
+	puts "Message from $nodeid is $CRYPTO"
+	changekey
+	puts "Message from root is $CRYPTO"
+	puts "Message from $nodeid is $CRYPT0"
 }
 
 
@@ -163,7 +182,16 @@ for {set i 1} {$i < 160} {incr i} {
 		#if there is already a node numbered l, let it leave.
 		if {$llist($l) == 1} {
 			$ns at $i.0 "$n($l) leave-group $rcvr($l) $group1"
-			puts "n$l left group1"
+			
+			$ns at $i.0 "sendmsg $l"
+			
+			# puts "Message at Root is $CRYPTO"
+			# puts "Message at n$l is $CRYPTO"
+			# puts "n$l left group1"
+			# changekey
+			# puts "Message at Root is $CRYPTO"
+			# puts "Message at n$l is $CRYPT0"
+			$ns at $i.0 [puts "======= $l HAS LEFT THE GROUP ======"]
 			$ns at $i.0 "decrease $l"
 		}
 	} else {
@@ -175,7 +203,7 @@ for {set i 1} {$i < 160} {incr i} {
 			tree insert ($NUMNODES+1)
 			#setValue [expr {int(rand()*5)}]
 			set llist($j) 1
-			ns at $i "send $j"
+			#$ns at $i "sendmsg $j"
 			incr j
 			}
 		}
